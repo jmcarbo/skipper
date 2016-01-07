@@ -72,7 +72,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// inline ids for check
 // 		"check",
 // 		[]*medium{{typ: inlineIds}},
@@ -81,7 +81,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// defaults to etcd
 // 		"check",
 // 		nil,
@@ -95,7 +95,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 			path: "/skipper"},
 // 		nil,
 // 	}, {
-// 
+//
 // 		// returns input for check
 // 		"check",
 // 		[]*medium{{typ: stdin}},
@@ -104,7 +104,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		&medium{typ: stdin},
 // 		nil,
 // 	}, {
-// 
+//
 // 		// returns input for print
 // 		"print",
 // 		[]*medium{{typ: stdin}},
@@ -113,7 +113,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		&medium{typ: stdin},
 // 		nil,
 // 	}, {
-// 
+//
 // 		// missing input
 // 		"upsert",
 // 		nil,
@@ -122,7 +122,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// too many inputs
 // 		"upsert",
 // 		[]*medium{{typ: stdin}, {typ: file}, {typ: etcd}},
@@ -131,7 +131,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// ids when not delete
 // 		"upsert",
 // 		[]*medium{{typ: inlineIds}},
@@ -140,7 +140,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// ids accepted when delete
 // 		"delete",
 // 		[]*medium{{typ: inlineIds}},
@@ -149,7 +149,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		&medium{typ: inlineIds},
 // 		nil,
 // 	}, {
-// 
+//
 // 		// missing input
 // 		"delete",
 // 		[]*medium{{typ: innkeeper}},
@@ -158,7 +158,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// stdin input should be supported for delete
 // 		"delete",
 // 		[]*medium{{typ: stdin}},
@@ -167,7 +167,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		&medium{typ: stdin},
 // 		nil,
 // 	}, {
-// 
+//
 // 		// inlineIds should not be supported
 // 		"upsert",
 // 		[]*medium{{typ: inlineIds}},
@@ -176,7 +176,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		nil,
 // 		nil,
 // 	}, {
-// 
+//
 // 		// output defaults to null when write
 // 		"upsert",
 // 		[]*medium{{typ: stdin}},
@@ -185,7 +185,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 		&medium{typ: stdin},
 // 		nil,
 // 	}, {
-// 
+//
 // 		// input and output specified
 // 		"upsert",
 // 		[]*medium{{
@@ -213,7 +213,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 			if err == nil {
 // 				t.Error("failed to fail")
 // 			}
-// 
+//
 // 			if item.err != nil && err != item.err {
 // 				t.Error("invalid error")
 // 			}
@@ -221,7 +221,7 @@ func checkMedium(t *testing.T, left, right *medium, testIndex, itemIndex int) {
 // 			if err != nil {
 // 				t.Error(err)
 // 			}
-// 
+//
 // 			checkMedium(t, item.in, in, i, 0)
 // 			checkMedium(t, item.out, out, i, 1)
 // 		}

@@ -178,7 +178,7 @@ func TestProcessArgs(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Error(err)
-                    return
+					return
 				}
 
 				if len(media) == len(item.media) {

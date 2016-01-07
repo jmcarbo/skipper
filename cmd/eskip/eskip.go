@@ -15,10 +15,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
-    "github.com/zalando/skipper/eskip"
 )
 
 func printStderr(args ...interface{}) {
@@ -58,7 +56,7 @@ func main() {
 		exitHint(err)
 	}
 
-    c, err := commands[a.cmd](a)
+	c, err := commands[a.cmd](a)
 	if err != nil {
 		exitHint(err)
 	}

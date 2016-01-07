@@ -4,7 +4,6 @@ import (
 	"github.com/zalando/skipper/eskip"
 	// "github.com/zalando/skipper/eskipfile"
 	// etcdclient "github.com/zalando/skipper/etcd"
-	innkeeperclient "github.com/zalando/skipper/innkeeper"
 	"io"
 	"io/ioutil"
 	// "os"
@@ -31,26 +30,26 @@ type idsReader struct {
 // 	if m == nil {
 // 		return nil, nil
 // 	}
-// 
+//
 // 	switch m.typ {
 // 	case innkeeper:
 // 		return createInnkeeperClient(m)
-// 
+//
 // 	case etcd:
 // 		return etcdclient.New(urlsToStrings(m.urls), m.path), nil
-// 
+//
 // 	case stdin:
 // 		return &stdinReader{reader: os.Stdin}, nil
-// 
+//
 // 	case file:
 // 		return eskipfile.Open(m.path)
-// 
+//
 // 	case inline:
 // 		return &inlineClient{routes: m.eskip}, nil
-// 
+//
 // 	case inlineIds:
 // 		return &idsReader{ids: m.ids}, nil
-// 
+//
 // 	default:
 // 		return nil, invalidInputType
 // 	}

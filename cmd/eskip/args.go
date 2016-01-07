@@ -44,15 +44,15 @@ func (w *noopWriter) Write(b []byte) (int, error) {
 }
 
 type args struct {
-    cmd string
-    media []*medium
+	cmd   string
+	media []*medium
 }
 
 var (
 	invalidNumberOfArgs = errors.New("invalid number of args")
 	missingOAuthToken   = errors.New("missing OAuth token")
-	missingCommand = errors.New("missing command")
-	invalidCommand = errors.New("invalid command")
+	missingCommand      = errors.New("missing command")
+	invalidCommand      = errors.New("invalid command")
 )
 
 // parsing vars for flags:
@@ -203,8 +203,8 @@ func getCommandName(args []string) (string, error) {
 
 	cmd := args[1]
 
-    // this is here only to provide a more informative error message
-    // in case a flag follows the name of the binary
+	// this is here only to provide a more informative error message
+	// in case a flag follows the name of the binary
 	if cmd[0] == '-' {
 		return "", missingCommand
 	}
@@ -273,15 +273,15 @@ func processMediaParams() ([]*medium, error) {
 		media = append(media, stdinArg)
 	}
 
-    return media, nil
+	return media, nil
 }
 
 func processArgs() (*args, error) {
-    cmd, err := getCommandName(os.Args)
-    if err != nil {
-        return nil, err
-    }
+	cmd, err := getCommandName(os.Args)
+	if err != nil {
+		return nil, err
+	}
 
-    media, err := processMediaParams()
+	media, err := processMediaParams()
 	return &args{cmd, media}, err
 }
