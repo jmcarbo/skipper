@@ -15,95 +15,95 @@
 package main
 
 import (
-	"net/url"
-	"testing"
+	// "net/url"
+	// "testing"
 )
 
-func TestAddDefaultMedia(t *testing.T) {
-	for i, item := range []struct {
-		cmd       command
-		in        *medium
-		out       *medium
-		err       error
-		inResult  *medium
-		outResult *medium
-	}{{
-		// should use default input
-		cmd: print,
-		in:  nil,
-		out: nil,
-		err: nil,
-		inResult: &medium{
-			typ: etcd,
-			urls: []*url.URL{
-				{Scheme: "http", Host: "127.0.0.1:2379"},
-				{Scheme: "http", Host: "127.0.0.1:4001"}},
-			path: "/skipper"},
-		outResult: nil,
-	}, {
-		// should use specified input
-		cmd: print,
-		in: &medium{
-			typ: etcd,
-			urls: []*url.URL{
-				{Scheme: "https", Host: "etcd1.example.org:2379"},
-				{Scheme: "https", Host: "etcd2.example.org:4001"}},
-			path: "/skipper"},
-		out: nil,
-		err: nil,
-		inResult: &medium{
-			typ: etcd,
-			urls: []*url.URL{
-				{Scheme: "https", Host: "etcd1.example.org:2379"},
-				{Scheme: "https", Host: "etcd2.example.org:4001"}},
-			path: "/skipper"},
-		outResult: nil,
-	}, {
-		// should use default output and specified input
-		cmd: reset,
-		in: &medium{
-			typ: stdin,
-		},
-		out: nil,
-		err: nil,
-		inResult: &medium{
-			typ: stdin,
-		},
-		outResult: &medium{
-			typ: etcd,
-			urls: []*url.URL{
-				{Scheme: "http", Host: "127.0.0.1:2379"},
-				{Scheme: "http", Host: "127.0.0.1:4001"}},
-			path: "/skipper"},
-	}, {
-		// should use specified output and input
-		cmd: reset,
-		in: &medium{
-			typ: stdin,
-		},
-		out: &medium{
-			typ: etcd,
-			urls: []*url.URL{
-				{Scheme: "https", Host: "etcd1.example.org:2379"},
-				{Scheme: "https", Host: "etcd2.example.org:4001"}},
-			path: "/skipper"},
-		err: nil,
-		inResult: &medium{
-			typ: stdin,
-		},
-		outResult: &medium{
-			typ: etcd,
-			urls: []*url.URL{
-				{Scheme: "https", Host: "etcd1.example.org:2379"},
-				{Scheme: "https", Host: "etcd2.example.org:4001"}},
-			path: "/skipper"},
-	}} {
-		input, output, error := addDefaultMedia(item.cmd, item.in, item.out)
-		if error != item.err {
-			t.Error("wrong error for index: ", i)
-		}
-		//t.Error("XXX: ", input.urls[0], input.urls[1])
-		checkMedium(t, input, item.inResult, 0, i)
-		checkMedium(t, output, item.outResult, 1, i)
-	}
-}
+// func TestAddDefaultMedia(t *testing.T) {
+// 	for i, item := range []struct {
+// 		cmd       command
+// 		in        *medium
+// 		out       *medium
+// 		err       error
+// 		inResult  *medium
+// 		outResult *medium
+// 	}{{
+// 		// should use default input
+// 		cmd: print,
+// 		in:  nil,
+// 		out: nil,
+// 		err: nil,
+// 		inResult: &medium{
+// 			typ: etcd,
+// 			urls: []*url.URL{
+// 				{Scheme: "http", Host: "127.0.0.1:2379"},
+// 				{Scheme: "http", Host: "127.0.0.1:4001"}},
+// 			path: "/skipper"},
+// 		outResult: nil,
+// 	}, {
+// 		// should use specified input
+// 		cmd: print,
+// 		in: &medium{
+// 			typ: etcd,
+// 			urls: []*url.URL{
+// 				{Scheme: "https", Host: "etcd1.example.org:2379"},
+// 				{Scheme: "https", Host: "etcd2.example.org:4001"}},
+// 			path: "/skipper"},
+// 		out: nil,
+// 		err: nil,
+// 		inResult: &medium{
+// 			typ: etcd,
+// 			urls: []*url.URL{
+// 				{Scheme: "https", Host: "etcd1.example.org:2379"},
+// 				{Scheme: "https", Host: "etcd2.example.org:4001"}},
+// 			path: "/skipper"},
+// 		outResult: nil,
+// 	}, {
+// 		// should use default output and specified input
+// 		cmd: reset,
+// 		in: &medium{
+// 			typ: stdin,
+// 		},
+// 		out: nil,
+// 		err: nil,
+// 		inResult: &medium{
+// 			typ: stdin,
+// 		},
+// 		outResult: &medium{
+// 			typ: etcd,
+// 			urls: []*url.URL{
+// 				{Scheme: "http", Host: "127.0.0.1:2379"},
+// 				{Scheme: "http", Host: "127.0.0.1:4001"}},
+// 			path: "/skipper"},
+// 	}, {
+// 		// should use specified output and input
+// 		cmd: reset,
+// 		in: &medium{
+// 			typ: stdin,
+// 		},
+// 		out: &medium{
+// 			typ: etcd,
+// 			urls: []*url.URL{
+// 				{Scheme: "https", Host: "etcd1.example.org:2379"},
+// 				{Scheme: "https", Host: "etcd2.example.org:4001"}},
+// 			path: "/skipper"},
+// 		err: nil,
+// 		inResult: &medium{
+// 			typ: stdin,
+// 		},
+// 		outResult: &medium{
+// 			typ: etcd,
+// 			urls: []*url.URL{
+// 				{Scheme: "https", Host: "etcd1.example.org:2379"},
+// 				{Scheme: "https", Host: "etcd2.example.org:4001"}},
+// 			path: "/skipper"},
+// 	}} {
+// 		input, output, error := addDefaultMedia(item.cmd, item.in, item.out)
+// 		if error != item.err {
+// 			t.Error("wrong error for index: ", i)
+// 		}
+// 		//t.Error("XXX: ", input.urls[0], input.urls[1])
+// 		checkMedium(t, input, item.inResult, 0, i)
+// 		checkMedium(t, output, item.outResult, 1, i)
+// 	}
+// }

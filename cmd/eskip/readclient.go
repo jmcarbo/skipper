@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/zalando/skipper/eskip"
-	"github.com/zalando/skipper/eskipfile"
-	etcdclient "github.com/zalando/skipper/etcd"
+	// "github.com/zalando/skipper/eskipfile"
+	// etcdclient "github.com/zalando/skipper/etcd"
 	innkeeperclient "github.com/zalando/skipper/innkeeper"
 	"io"
 	"io/ioutil"
-	"os"
+	// "os"
 )
 
 type readClient interface {
@@ -18,7 +18,7 @@ type stdinReader struct {
 	reader io.Reader
 }
 
-type inlineReader struct {
+type inlineClient struct {
 	routes string
 }
 
@@ -26,49 +26,35 @@ type idsReader struct {
 	ids []string
 }
 
-func createReadClient(m *medium) (readClient, error) {
-	// no output, no client
-	if m == nil {
-		return nil, nil
-	}
-
-	switch m.typ {
-	case innkeeper:
-		return createInnkeeperClient(m)
-
-	case etcd:
-		return etcdclient.New(urlsToStrings(m.urls), m.path), nil
-
-	case stdin:
-		return &stdinReader{reader: os.Stdin}, nil
-
-	case file:
-		return eskipfile.Open(m.path)
-
-	case inline:
-		return &inlineReader{routes: m.eskip}, nil
-
-	case inlineIds:
-		return &idsReader{ids: m.ids}, nil
-
-	default:
-		return nil, invalidInputType
-	}
-}
-
-func createInnkeeperClient(m *medium) (*innkeeperclient.Client, error) {
-	auth := innkeeperclient.CreateInnkeeperAuthentication(innkeeperclient.AuthOptions{InnkeeperAuthToken: m.oauthToken})
-
-	ic, err := innkeeperclient.New(innkeeperclient.Options{
-		Address:        m.urls[0].String(),
-		Insecure:       false,
-		Authentication: auth})
-
-	if err != nil {
-		return nil, err
-	}
-	return ic, nil
-}
+// func createReadClient(m *medium) (readClient, error) {
+// 	// no output, no client
+// 	if m == nil {
+// 		return nil, nil
+// 	}
+// 
+// 	switch m.typ {
+// 	case innkeeper:
+// 		return createInnkeeperClient(m)
+// 
+// 	case etcd:
+// 		return etcdclient.New(urlsToStrings(m.urls), m.path), nil
+// 
+// 	case stdin:
+// 		return &stdinReader{reader: os.Stdin}, nil
+// 
+// 	case file:
+// 		return eskipfile.Open(m.path)
+// 
+// 	case inline:
+// 		return &inlineClient{routes: m.eskip}, nil
+// 
+// 	case inlineIds:
+// 		return &idsReader{ids: m.ids}, nil
+// 
+// 	default:
+// 		return nil, invalidInputType
+// 	}
+// }
 
 func (r *stdinReader) LoadAndParseAll() ([]*eskip.RouteInfo, error) {
 	// this pretty much disables continuous piping,
@@ -90,12 +76,8 @@ func (r *stdinReader) LoadAndParseAll() ([]*eskip.RouteInfo, error) {
 	return routesToRouteInfos(routes), nil
 }
 
-func (r *inlineReader) LoadAndParseAll() ([]*eskip.RouteInfo, error) {
-	routes, err := eskip.Parse(r.routes)
-	if err != nil {
-		return nil, err
-	}
-	return routesToRouteInfos(routes), nil
+func (ic *inlineClient) LoadAll() ([]*eskip.Route, error) {
+	return eskip.Parse(ic.routes)
 }
 
 func (r *idsReader) LoadAndParseAll() ([]*eskip.RouteInfo, error) {

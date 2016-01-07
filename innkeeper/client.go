@@ -456,20 +456,25 @@ func (c *Client) LoadUpdate() ([]*eskip.Route, []string, error) {
 	return routes, deleted, nil
 }
 
-func (c *Client) UpsertAll(routes []*eskip.Route) error {
+func (c *Client) Insert(r *eskip.Route) {
+}
+
+func (c *Client) InsertAll(r []*eskip.Route) {
 	// convert the routes to the innkeeper json structs
-	data := convertEskipToInnkeeper(routes)
+	// data := convertEskipToInnkeeper(routes)
 
-	for _, route := range data {
-		err := c.writeRoute(c.opts.Address+allRoutesPath, route)
-		if err != nil {
-			return err
-		}
-	}
+	// for _, route := range data {
+	// 	err := c.writeRoute(c.opts.Address+allRoutesPath, route)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	return nil
+	// return nil
 }
 
 func (c *Client) DeleteAllIf(routes []*eskip.Route, cond eskip.RoutePredicate) error {
 	return nil
 }
+
+func (c *Client) UpsertAll(routes []*eskip.Route) error { return nil }

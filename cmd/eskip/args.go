@@ -43,9 +43,16 @@ func (w *noopWriter) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
+type args struct {
+    cmd string
+    media []*medium
+}
+
 var (
 	invalidNumberOfArgs = errors.New("invalid number of args")
 	missingOAuthToken   = errors.New("missing OAuth token")
+	missingCommand = errors.New("missing command")
+	invalidCommand = errors.New("invalid command")
 )
 
 // parsing vars for flags:
@@ -188,8 +195,29 @@ func processStdin() (*medium, error) {
 	return &medium{typ: stdin}, nil
 }
 
+// second argument must be the ('sub') command.
+func getCommandName(args []string) (string, error) {
+	if len(args) < 2 {
+		return "", missingCommand
+	}
+
+	cmd := args[1]
+
+    // this is here only to provide a more informative error message
+    // in case a flag follows the name of the binary
+	if cmd[0] == '-' {
+		return "", missingCommand
+	}
+
+	if _, ok := commands[cmd]; ok {
+		return cmd, nil
+	} else {
+		return "", invalidCommand
+	}
+}
+
 // returns media detected from the executing command.
-func processArgs() ([]*medium, error) {
+func processMediaParams() ([]*medium, error) {
 	err := flags.Parse(os.Args[2:])
 	if err != nil {
 		return nil, err
@@ -198,7 +226,6 @@ func processArgs() ([]*medium, error) {
 	var media []*medium
 
 	innkeeperArg, err := processInnkeeperArgs(innkeeperUrl, oauthToken)
-
 	if err != nil {
 		return nil, err
 	}
@@ -246,5 +273,15 @@ func processArgs() ([]*medium, error) {
 		media = append(media, stdinArg)
 	}
 
-	return media, nil
+    return media, nil
+}
+
+func processArgs() (*args, error) {
+    cmd, err := getCommandName(os.Args)
+    if err != nil {
+        return nil, err
+    }
+
+    media, err := processMediaParams()
+	return &args{cmd, media}, err
 }

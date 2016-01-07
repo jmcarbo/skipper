@@ -18,32 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-)
-
-type (
-	command     string
-	commandFunc func(readClient readClient, readOutClient readClient, writeClient writeClient) error
-)
-
-const (
-	check  command = "check"
-	print  command = "print"
-	upsert command = "upsert"
-	reset  command = "reset"
-	delete command = "delete"
-)
-
-// map command string to command function
-var commands = map[command]commandFunc{
-	check:  checkCmd,
-	print:  printCmd,
-	upsert: upsertCmd,
-	reset:  resetCmd,
-	delete: deleteCmd}
-
-var (
-	missingCommand = errors.New("missing command")
-	invalidCommand = errors.New("invalid command")
+    "github.com/zalando/skipper/eskip"
 )
 
 func printStderr(args ...interface{}) {
@@ -70,24 +45,6 @@ func exitErrHint(err error, hint bool) {
 func exitHint(err error) { exitErrHint(err, true) }
 func exit(err error)     { exitErrHint(err, false) }
 
-// second argument must be the ('sub') command.
-func getCommand(args []string) (command, error) {
-	if len(args) < 2 {
-		return "", missingCommand
-	}
-
-	cmd := command(args[1])
-	if cmd[0] == '-' {
-		return "", missingCommand
-	}
-
-	if _, ok := commands[cmd]; ok {
-		return cmd, nil
-	} else {
-		return "", invalidCommand
-	}
-}
-
 func main() {
 	// print detailed usage if requested and exit:
 	if isHelp() {
@@ -95,48 +52,26 @@ func main() {
 		exit(nil)
 	}
 
-	cmd, err := getCommand(os.Args)
-	if err != nil {
-		exitHint(err)
-	}
-
 	// process arguments, not checking if they make any sense:
-	media, err := processArgs()
+	a, err := processArgs()
 	if err != nil {
 		exitHint(err)
 	}
 
-	// check if the arguments make sense, and select input/output
-	// based on the rules of the current command.
-	in, out, err := validateSelectMedia(cmd, media)
+    c, err := commands[a.cmd](a)
 	if err != nil {
 		exitHint(err)
 	}
 
-	in, out, err = addDefaultMedia(cmd, in, out)
+	// in, out, err = addDefaultMedia(cmd, in, out)
+	// if err != nil {
+	// 	exitHint(err)
+	// }
 
-	if err != nil {
-		exitHint(err)
-	}
+	// readOutClient, err := createReadClient(out)
+	// if err != nil {
+	// 	exitHint(err)
+	// }
 
-	writeClient, err := createWriteClient(out)
-
-	if err != nil {
-		exitHint(err)
-	}
-
-	readClient, err := createReadClient(in)
-
-	if err != nil {
-		exitHint(err)
-	}
-
-	readOutClient, err := createReadClient(out)
-
-	if err != nil {
-		exitHint(err)
-	}
-
-	// execute command:
-	exit(commands[cmd](readClient, readOutClient, writeClient))
+	exit(c.execute())
 }

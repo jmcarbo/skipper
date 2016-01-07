@@ -166,7 +166,7 @@ func TestProcessArgs(t *testing.T) {
 			path: "file1"}},
 	}} {
 		preserveArgs(item.args, func() {
-			media, err := processArgs()
+			media, err := processMediaParams()
 			if item.fail {
 				if err == nil {
 					t.Error("failed to fail", i)
@@ -178,6 +178,7 @@ func TestProcessArgs(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Error(err)
+                    return
 				}
 
 				if len(media) == len(item.media) {

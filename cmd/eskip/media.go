@@ -34,13 +34,6 @@ const (
 	inlineIds
 )
 
-var commandToValidations = map[command]validateSelectFunc{
-	check:  validateSelectRead,
-	print:  validateSelectRead,
-	upsert: validateSelectWrite,
-	reset:  validateSelectWrite,
-	delete: validateSelectDelete}
-
 type medium struct {
 	typ        mediaType
 	urls       []*url.URL
@@ -129,10 +122,4 @@ func validateSelectDelete(media []*medium) (in, out *medium, err error) {
 	}
 
 	return in, out, nil
-}
-
-// Validates media from args for the current command, and selects input and/or output.
-func validateSelectMedia(cmd command, media []*medium) (input, output *medium, err error) {
-	// cmd should be present and valid
-	return commandToValidations[cmd](media)
 }
