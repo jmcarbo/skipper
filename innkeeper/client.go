@@ -456,7 +456,8 @@ func (c *Client) LoadUpdate() ([]*eskip.Route, []string, error) {
 	return routes, deleted, nil
 }
 
-func (c *Client) Insert(r *eskip.Route) {
+func (c *Client) Insert(r *eskip.Route) error {
+	return nil
 }
 
 func (c *Client) InsertAll(r []*eskip.Route) {

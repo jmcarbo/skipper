@@ -46,7 +46,6 @@ type medium struct {
 var (
 	tooManyInputs    = errors.New("too many inputs")
 	invalidInputType = errors.New("invalid input type")
-	missingInput     = errors.New("missing input")
 )
 
 // validate medium from args, and check if it can be used

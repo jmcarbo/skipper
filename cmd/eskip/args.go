@@ -283,5 +283,9 @@ func processArgs() (*args, error) {
 	}
 
 	media, err := processMediaParams()
-	return &args{cmd, media}, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &args{cmd, media}, nil
 }

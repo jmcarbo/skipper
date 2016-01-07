@@ -32,7 +32,7 @@ func resetFlagVars() {
 }
 
 func preserveArgs(args []string, f func()) {
-	os.Args, args = append([]string{"eskip", "cmd"}, args...), os.Args
+	os.Args, args = args, os.Args
 	defer func() {
 		os.Args = args
 	}()
@@ -43,7 +43,33 @@ func preserveArgs(args []string, f func()) {
 	f()
 }
 
-func TestProcessArgs(t *testing.T) {
+func TestGetCommandName(t *testing.T) {
+	for i, item := range []struct {
+		args []string
+		cmd  string
+		err  error
+	}{{
+		[]string{"some", "insert"},
+		"insert",
+		nil,
+	}, {
+		[]string{"some", "hello"},
+		"",
+		invalidCommand,
+	}, {
+		[]string{"some"},
+		"",
+		missingCommand,
+	}} {
+		if cmd, err := getCommandName(item.args); err != item.err {
+			t.Error("get command name error case failed", i, err, item.err)
+		} else if err == nil && cmd != item.cmd {
+			t.Error("get command name failed", i, cmd, item.cmd)
+		}
+	}
+}
+
+func TestProcessMediaParams(t *testing.T) {
 	for i, item := range []struct {
 		args  []string
 		fail  bool
@@ -165,7 +191,7 @@ func TestProcessArgs(t *testing.T) {
 			typ:  file,
 			path: "file1"}},
 	}} {
-		preserveArgs(item.args, func() {
+		preserveArgs(append([]string{"eskip", "cmd"}, item.args...), func() {
 			media, err := processMediaParams()
 			if item.fail {
 				if err == nil {
@@ -188,6 +214,41 @@ func TestProcessArgs(t *testing.T) {
 				} else {
 					t.Error("invalid number of parsed media", i)
 				}
+			}
+		})
+	}
+}
+
+func TestProcessArgs(t *testing.T) {
+	for i, item := range []struct {
+		args []string
+		cmd  string
+		mlen int
+		err  bool
+	}{{
+		[]string{"some", "invalid-command"},
+		"",
+		0,
+		true,
+	}, {
+		[]string{"some", "insert", "-innkeeper-url", ":8080"},
+		"",
+		0,
+		true,
+	}, {
+		[]string{"some", "insert", "-oauth-token", "test-token", "-routes", "Any() -> <shunt>"},
+		"insert",
+		2,
+		false,
+	}} {
+		preserveArgs(item.args, func() {
+			if a, err := processArgs(); err == nil && item.err || err != nil && !item.err {
+				t.Log(err)
+				t.Error("failed to process args, error case", i, err, item.err)
+			} else if err == nil && a.cmd != item.cmd {
+				t.Error("failed to process command", i, a.cmd, item.cmd)
+			} else if err == nil && len(a.media) != item.mlen {
+				t.Error("failed to process media", i, len(a.media), item.mlen)
 			}
 		})
 	}

@@ -5,17 +5,17 @@ type insertCommand struct {
 	inserter inserter
 }
 
-func (a *args) validateSelectInsert() (*medium, *medium, error) {
+func validateSelectInsert(a *args) (*medium, *medium, error) {
 	if len(a.media) == 0 || (len(a.media) == 1 && a.media[0].typ == innkeeper) {
 		return nil, nil, missingInput
 	}
 
-	if len(a.media) > 2 {
-		return nil, nil, tooManyInputs
+	if len(a.media) == 1 {
+		return nil, nil, missingOutput
 	}
 
-	if len(a.media) == 1 {
-		return nil, nil, invalidInputType
+	if len(a.media) > 2 {
+		return nil, nil, tooManyInputs
 	}
 
 	var input, output *medium
@@ -26,7 +26,7 @@ func (a *args) validateSelectInsert() (*medium, *medium, error) {
 		input = a.media[0]
 		output = a.media[1]
 	} else {
-		return nil, nil, invalidInputType
+		return nil, nil, missingOutput
 	}
 
 	switch input.typ {
@@ -38,7 +38,7 @@ func (a *args) validateSelectInsert() (*medium, *medium, error) {
 }
 
 func newInsert(a *args) (command, error) {
-	input, output, err := a.validateSelectInsert()
+	input, output, err := validateSelectInsert(a)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,9 @@
 package main
 
-import "github.com/zalando/skipper/eskip"
+import (
+	"errors"
+	"github.com/zalando/skipper/eskip"
+)
 
 const (
 	check  = "check"
@@ -20,6 +23,11 @@ var commands = map[string]func(*args) (command, error){
 	// reset:  newReset,
 	// delete: newDelete}
 }
+
+var (
+	missingInput  = errors.New("missing input")
+	missingOutput = errors.New("missing output")
+)
 
 type command interface {
 	execute() error
