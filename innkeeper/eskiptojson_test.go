@@ -151,7 +151,7 @@ func TestConvertEndpointEmpty(t *testing.T) {
 
 func TestConvertEskipToInnkeeper(t *testing.T) {
 
-	route := []*eskip.Route{{
+	route := &eskip.Route{
 		Id:            "theid",
 		HostRegexps:   []string{"www.matcher.com"},
 		Method:        "GET",
@@ -161,28 +161,26 @@ func TestConvertEskipToInnkeeper(t *testing.T) {
 		Filters: []*eskip.Filter{
 			&eskip.Filter{Name: "filter1", Args: []interface{}{"Hello", 1}},
 			&eskip.Filter{Name: "filter2", Args: []interface{}{2, "Hello1", "World"}}},
-		Backend: "www.backend.com"}}
+		Backend: "www.backend.com"}
 
-	routes := convertEskipToInnkeeper(route)
+	r := convertEskipToInnkeeper(route)
 
-	assert.Equal(t, 1, len(routes))
-	assert.Equal(t, "theid", routes[0].Name)
-	assert.Equal(t, 2, len(routes[0].Route.Matcher.HeaderMatchers))
-	assert.Equal(t, 2, len(routes[0].Route.Filters))
-	assert.Equal(t, "www.backend.com", routes[0].Route.Endpoint)
+	assert.Equal(t, "theid", r.Name)
+	assert.Equal(t, 2, len(r.Route.Matcher.HeaderMatchers))
+	assert.Equal(t, 2, len(r.Route.Filters))
+	assert.Equal(t, "www.backend.com", r.Route.Endpoint)
 }
 
 func TestEskipToInnkeeperMinimal(t *testing.T) {
-	route := []*eskip.Route{{
+	route := &eskip.Route{
 		Id:     "theid",
-		Method: "GET"}}
+		Method: "GET"}
 
-	routes := convertEskipToInnkeeper(route)
+	r := convertEskipToInnkeeper(route)
 
-	assert.Equal(t, 1, len(routes))
-	assert.Equal(t, "theid", routes[0].Name)
-	assert.Equal(t, "GET", routes[0].Route.Matcher.MethodMatcher)
-	assert.Equal(t, 0, len(routes[0].Route.Filters))
-	assert.Equal(t, 0, len(routes[0].Route.Matcher.HeaderMatchers))
-	assert.Equal(t, "", routes[0].Route.Endpoint)
+	assert.Equal(t, "theid", r.Name)
+	assert.Equal(t, "GET", r.Route.Matcher.MethodMatcher)
+	assert.Equal(t, 0, len(r.Route.Filters))
+	assert.Equal(t, 0, len(r.Route.Matcher.HeaderMatchers))
+	assert.Equal(t, "", r.Route.Endpoint)
 }

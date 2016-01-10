@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"github.com/zalando/skipper/eskipfile"
-	innkc "github.com/zalando/skipper/innkeeper"
+	innk "github.com/zalando/skipper/innkeeper"
 )
 
-func createInnkeeperClient(m *medium) (*innkc.Client, error) {
-	auth := innkc.CreateInnkeeperAuthentication(innkc.AuthOptions{InnkeeperAuthToken: m.oauthToken})
-	return innkc.New(innkc.Options{
+func createInnkeeperClient(m *medium) (*innk.Client, error) {
+	auth := innk.CreateInnkeeperAuthentication(innk.AuthOptions{InnkeeperAuthToken: m.oauthToken})
+	return innk.New(innk.Options{
 		Address:        m.urls[0].String(),
 		Insecure:       false,
 		Authentication: auth})

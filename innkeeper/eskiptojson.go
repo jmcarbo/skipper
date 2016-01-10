@@ -97,35 +97,25 @@ func convertEndpoint(r *eskip.Route) (endpoint string) {
 	return
 }
 
-func convertEskipToInnkeeper(routes []*eskip.Route) (data []*routeData) {
+func convertEskipToInnkeeper(r *eskip.Route) *routeData {
+	id := eskip.GenerateIfNeeded(r.Id)
+	host := convertHost(r)
+	method := convertMethod(r)
+	pathMatch := convertPathMatcher(r)
+	headerMatchers := convertHeaderMatchers(r)
+	filters := convertFil(r)
+	endpoint := convertEndpoint(r)
 
-	for _, r := range routes {
+	match := &matcher{
+		HostMatcher:    host,
+		PathMatcher:    pathMatch,
+		MethodMatcher:  method,
+		HeaderMatchers: headerMatchers}
 
-		id := eskip.GenerateIfNeeded(r.Id)
-		host := convertHost(r)
-		method := convertMethod(r)
-		pathMatch := convertPathMatcher(r)
-		headerMatchers := convertHeaderMatchers(r)
-		filters := convertFil(r)
-		endpoint := convertEndpoint(r)
+	ro := &routeDef{
+		Matcher:  *match,
+		Filters:  filters,
+		Endpoint: endpoint}
 
-		match := &matcher{
-			HostMatcher:    host,
-			PathMatcher:    pathMatch,
-			MethodMatcher:  method,
-			HeaderMatchers: headerMatchers}
-
-		ro := &routeDef{
-			Matcher:  *match,
-			Filters:  filters,
-			Endpoint: endpoint}
-
-		d := &routeData{
-			Name:  id,
-			Route: *ro}
-
-		data = append(data, d)
-	}
-
-	return
+	return &routeData{Name: id, Route: *ro}
 }

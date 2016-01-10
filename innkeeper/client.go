@@ -319,32 +319,32 @@ func getHttpError(r *http.Response) (error, bool) {
 }
 
 func (c *Client) writeRoute(url string, route *routeData) error {
+	d, err := json.Marshal(route)
+	if err != nil {
+		return err
+	}
 
-	res, err := json.Marshal(route)
-
-	req, err := http.NewRequest("POST", url, bytes.NewReader(res))
-
+	req, err := http.NewRequest("POST", url, bytes.NewReader(d))
 	if err != nil {
 		return err
 	}
 
 	authToken, err := c.opts.Authentication.GetToken()
-
 	if err != nil {
 		return err
 	}
 
 	req.Header.Add(authHeaderName, authToken)
 	req.Header.Set("Content-Type", "application/json")
-	response, err := c.httpClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 
-	defer response.Body.Close()
+	defer res.Body.Close()
 
-	if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusBadRequest {
-		apiError, err := parseApiError(response.Body)
+	if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusBadRequest {
+		apiError, err := parseApiError(res.Body)
 		if err != nil {
 			return err
 		}
@@ -457,7 +457,8 @@ func (c *Client) LoadUpdate() ([]*eskip.Route, []string, error) {
 }
 
 func (c *Client) Insert(r *eskip.Route) error {
-	return nil
+	data := convertEskipToInnkeeper(r)
+	return c.writeRoute(c.opts.Address+allRoutesPath, data)
 }
 
 func (c *Client) InsertAll(r []*eskip.Route) {

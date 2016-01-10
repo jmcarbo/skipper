@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
 func TestValidateSelect(t *testing.T) {
 	for _, item := range []struct {
@@ -101,5 +105,76 @@ func TestNewInsert(t *testing.T) {
 }
 
 func TestExecuteInsert(t *testing.T) {
-	// t.Error("execute insert missing")
+	for _, item := range []struct {
+		msg        string
+		args       *args
+		serverFail bool
+		err        bool
+	}{{
+		"load all fail",
+		&args{
+			media: []*medium{{
+				typ:   inline,
+				eskip: "invalid eskip",
+			}, {
+				typ:        innkeeper,
+				oauthToken: "test-token",
+			}},
+		},
+		false,
+		true,
+	}, {
+		"insert fail",
+		&args{
+			media: []*medium{{
+				typ:   inline,
+				eskip: "Any() -> <shunt>",
+			}, {
+				typ:        innkeeper,
+				oauthToken: "test-token",
+			}},
+		},
+		true,
+		true,
+	}, {
+		"insert succeed",
+		&args{
+			media: []*medium{{
+				typ:   inline,
+				eskip: "Any() -> <shunt>; Path(\"/some\") -> \"https://www.example.org\"",
+			}, {
+				typ:        innkeeper,
+				oauthToken: "test-token",
+			}},
+		},
+		false,
+		true,
+	}} {
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if item.serverFail {
+				w.WriteHeader(http.StatusBadRequest)
+			}
+		}))
+
+		urls, err := stringsToUrls(s.URL)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		for _, m := range item.args.media {
+			m.urls = urls
+		}
+
+		cmd, err := newInsert(item.args)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = cmd.execute()
+		if err == nil && item.err || err != nil && !item.err {
+			t.Error("insert execute failed, error case", item.msg, err, item.err)
+		}
+	}
 }
