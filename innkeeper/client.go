@@ -318,17 +318,18 @@ func getHttpError(r *http.Response) (error, bool) {
 	}
 }
 
-func (c *Client) doRequest(authRetry bool, r *http.Request) (*http.Response, error) {
-	r.Header.Set(authHeaderName, c.authToken)
-	response, err := c.httpClient.Do(r)
+func (c *Client) doRequest(authRetry bool, makeReq func() *http.Request) (*http.Response, error) {
+	req := makeReq()
+	req.Header.Set(authHeaderName, c.authToken)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.StatusCode == http.StatusUnauthorized {
-		defer response.Body.Close()
+	if res.StatusCode == http.StatusUnauthorized {
+		defer res.Body.Close()
 
-		apiError, err := parseApiError(response.Body)
+		apiError, err := parseApiError(res.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -346,14 +347,14 @@ func (c *Client) doRequest(authRetry bool, r *http.Request) (*http.Response, err
 			return nil, err
 		}
 
-		return c.doRequest(false, r)
+		return c.doRequest(false, makeReq)
 	}
 
-	if err, hasErr := getHttpError(response); hasErr {
+	if err, hasErr := getHttpError(res); hasErr {
 		return nil, err
 	}
 
-	return response, nil
+	return res, nil
 }
 
 // Calls an http request to an Innkeeper URL for route definitions.
@@ -366,7 +367,8 @@ func (c *Client) requestData(authRetry bool, url string) ([]*routeData, error) {
 		return nil, err
 	}
 
-	res, err := c.doRequest(true, req)
+	makeReq := func() *http.Request { return req }
+	res, err := c.doRequest(true, makeReq)
 	if err != nil {
 		return nil, err
 	}
@@ -389,13 +391,19 @@ func (c *Client) writeRoute(url string, route *routeData) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(d))
+	reqBody := bytes.NewReader(d)
+	req, err := http.NewRequest("POST", url, reqBody)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	res, err := c.doRequest(true, req)
+	makeReq := func() *http.Request {
+		reqBody.Seek(0, 0)
+		return req
+	}
+
+	res, err := c.doRequest(true, makeReq)
 	if err != nil {
 		return err
 	}

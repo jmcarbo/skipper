@@ -38,19 +38,9 @@ func (aa autoAuth) GetToken() (string, error) {
 	return "", errors.New(string(authErrorAuthentication))
 }
 
-type innkeeperHandler struct{ data []*routeData }
+type loadHandler struct{ data []*routeData }
 
-func (h *innkeeperHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get(authHeaderName) != testAuthenticationToken {
-		w.WriteHeader(http.StatusUnauthorized)
-		enc := json.NewEncoder(w)
-
-		// ignoring error
-		enc.Encode(&apiError{ErrorType: string(authErrorPermission)})
-
-		return
-	}
-
+func (h *loadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var responseData []*routeData
 	if r.URL.Path == "/routes" {
 		for _, di := range h.data {
@@ -79,8 +69,41 @@ func (h *innkeeperHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func innkeeperServer(data []*routeData) *httptest.Server {
-	return httptest.NewServer(&innkeeperHandler{data})
+type insertHandler struct{}
+
+func (h *insertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+}
+
+type methodMux map[string]http.Handler
+
+func (m methodMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get(authHeaderName) != testAuthenticationToken {
+		w.WriteHeader(http.StatusUnauthorized)
+		enc := json.NewEncoder(w)
+
+		// ignoring error
+		enc.Encode(&apiError{ErrorType: string(authErrorPermission)})
+
+		return
+	}
+
+	m[r.Method].ServeHTTP(w, r)
+}
+
+type testServer struct {
+	server        *httptest.Server
+	loadHandler   *loadHandler
+	insertHandler *insertHandler
+}
+
+func newServer(data []*routeData) *testServer {
+	m := make(methodMux)
+	lh := &loadHandler{data}
+	ih := &insertHandler{}
+	m["GET"] = lh
+	m["POST"] = ih
+	s := httptest.NewServer(m)
+	return &testServer{s, lh, ih}
 }
 
 func testData() []*routeData {
@@ -523,9 +546,9 @@ func TestConvertDeletedChangeLatest(t *testing.T) {
 }
 
 func TestReceivesEmpty(t *testing.T) {
-	s := innkeeperServer(nil)
+	s := newServer(nil)
 
-	c, err := New(Options{Address: s.URL, Authentication: autoAuth(true)})
+	c, err := New(Options{Address: s.server.URL, Authentication: autoAuth(true)})
 	if err != nil {
 		t.Error(err)
 		return
@@ -539,9 +562,9 @@ func TestReceivesEmpty(t *testing.T) {
 
 func TestReceivesInitial(t *testing.T) {
 	d := testData()
-	s := innkeeperServer(d)
+	s := newServer(d)
 
-	c, err := New(Options{Address: s.URL, Authentication: autoAuth(true)})
+	c, err := New(Options{Address: s.server.URL, Authentication: autoAuth(true)})
 	if err != nil {
 		t.Error(err)
 		return
@@ -557,10 +580,10 @@ func TestReceivesInitial(t *testing.T) {
 
 func TestFailingAuthOnReceive(t *testing.T) {
 	d := testData()
-	s := innkeeperServer(d)
+	s := newServer(d)
 	a := autoAuth(false)
 
-	c, err := New(Options{Address: s.URL, Authentication: a})
+	c, err := New(Options{Address: s.server.URL, Authentication: a})
 	if err != nil {
 		t.Error(err)
 		return
@@ -574,10 +597,9 @@ func TestFailingAuthOnReceive(t *testing.T) {
 
 func TestReceivesUpdates(t *testing.T) {
 	d := testData()
-	h := &innkeeperHandler{d}
-	s := httptest.NewServer(h)
+	s := newServer(d)
 
-	c, err := New(Options{Address: s.URL, Authentication: autoAuth(true)})
+	c, err := New(Options{Address: s.server.URL, Authentication: autoAuth(true)})
 	if err != nil {
 		t.Error(err)
 		return
@@ -605,7 +627,7 @@ func TestReceivesUpdates(t *testing.T) {
 	}
 
 	d = append(d, newRoute)
-	h.data = d
+	s.loadHandler.data = d
 
 	rs, ds, err := c.LoadUpdate()
 	if err != nil {
@@ -620,10 +642,9 @@ func TestReceivesUpdates(t *testing.T) {
 
 func TestFailingAuthOnUpdate(t *testing.T) {
 	d := testData()
-	h := &innkeeperHandler{d}
-	s := httptest.NewServer(h)
+	s := newServer(d)
 
-	c, err := New(Options{Address: s.URL, Authentication: autoAuth(true)})
+	c, err := New(Options{Address: s.server.URL, Authentication: autoAuth(true)})
 	if err != nil {
 		t.Error(err)
 		return
@@ -653,7 +674,7 @@ func TestFailingAuthOnUpdate(t *testing.T) {
 	}
 
 	d = append(d, newRoute)
-	h.data = d
+	s.loadHandler.data = d
 
 	_, _, err = c.LoadUpdate()
 	if err == nil {
@@ -667,10 +688,10 @@ func TestUsesPreAndPostRouteFilters(t *testing.T) {
 		di.Route.Filters = []filter{filter{Name: builtin.ModPathName, Args: []interface{}{".*", "replacement"}}}
 	}
 
-	s := innkeeperServer(d)
+	s := newServer(d)
 
 	c, err := New(Options{
-		Address:          s.URL,
+		Address:          s.server.URL,
 		Authentication:   autoAuth(true),
 		PreRouteFilters:  `filter1(3.14) -> filter2("key", 42)`,
 		PostRouteFilters: `filter3("Hello, world!")`})
@@ -714,5 +735,37 @@ func TestUsesPreAndPostRouteFilters(t *testing.T) {
 			r.Filters[3].Args[0] != "Hello, world!" {
 			t.Error("failed to parse filters 5")
 		}
+	}
+}
+
+func TestInsertAuthFail(t *testing.T) {
+	s := newServer(nil)
+	c, err := New(Options{
+		Address:        s.server.URL,
+		Authentication: autoAuth(false)})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = c.Insert(&eskip.Route{})
+	if err == nil {
+		t.Error("failed to fail on authentication")
+	}
+}
+
+func TestInsert(t *testing.T) {
+	s := newServer(nil)
+	c, err := New(Options{
+		Address:        s.server.URL,
+		Authentication: autoAuth(true)})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = c.Insert(&eskip.Route{})
+	if err != nil {
+		t.Error("failed to insert route", err)
 	}
 }
