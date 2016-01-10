@@ -318,62 +318,16 @@ func getHttpError(r *http.Response) (error, bool) {
 	}
 }
 
-func (c *Client) writeRoute(url string, route *routeData) error {
-	d, err := json.Marshal(route)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewReader(d))
-	if err != nil {
-		return err
-	}
-
-	authToken, err := c.opts.Authentication.GetToken()
-	if err != nil {
-		return err
-	}
-
-	req.Header.Add(authHeaderName, authToken)
-	req.Header.Set("Content-Type", "application/json")
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusBadRequest {
-		apiError, err := parseApiError(res.Body)
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("unknown error: %s", apiError)
-	}
-
-	return nil
-}
-
-// Calls an http request to an Innkeeper URL for route definitions.
-// If authRetry is true, and the request fails due to an
-// authentication/authorization related problem, it retries the request with
-// reauthenticating first.
-func (c *Client) requestData(authRetry bool, url string) ([]*routeData, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func (c *Client) doRequest(authRetry bool, r *http.Request) (*http.Response, error) {
+	r.Header.Set(authHeaderName, c.authToken)
+	response, err := c.httpClient.Do(r)
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add(authHeaderName, c.authToken)
-	response, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusUnauthorized {
+		defer response.Body.Close()
+
 		apiError, err := parseApiError(response.Body)
 		if err != nil {
 			return nil, err
@@ -392,14 +346,34 @@ func (c *Client) requestData(authRetry bool, url string) ([]*routeData, error) {
 			return nil, err
 		}
 
-		return c.requestData(false, url)
+		return c.doRequest(false, r)
 	}
 
 	if err, hasErr := getHttpError(response); hasErr {
 		return nil, err
 	}
 
-	routesData, err := ioutil.ReadAll(response.Body)
+	return response, nil
+}
+
+// Calls an http request to an Innkeeper URL for route definitions.
+// If authRetry is true, and the request fails due to an
+// authentication/authorization related problem, it retries the request with
+// reauthenticating first.
+func (c *Client) requestData(authRetry bool, url string) ([]*routeData, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.doRequest(true, req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	routesData, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -407,6 +381,27 @@ func (c *Client) requestData(authRetry bool, url string) ([]*routeData, error) {
 	result := []*routeData{}
 	err = json.Unmarshal(routesData, &result)
 	return result, err
+}
+
+func (c *Client) writeRoute(url string, route *routeData) error {
+	d, err := json.Marshal(route)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(d))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	res, err := c.doRequest(true, req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	return nil
 }
 
 func (c *Client) LoadAndParseAll() ([]*eskip.RouteInfo, error) {
