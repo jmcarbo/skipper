@@ -19,7 +19,7 @@ var commands = map[string]func(*args) (command, error){
 	// check:  newCheck,
 	// print:  newPrint,
 	insert: newInsert,
-	// upsert: newUpsert,
+	upsert: newUpsert,
 	// reset:  newReset,
 	// delete: newDelete}
 }
@@ -51,11 +51,6 @@ type upserter interface {
 
 type deleter interface {
 	Delete(id string) error
-}
-
-type upsertCommand struct {
-	loader   loader
-	upserter upserter
 }
 
 type checkCommand struct {

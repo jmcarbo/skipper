@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/zalando/skipper/eskipfile"
 	innk "github.com/zalando/skipper/innkeeper"
+    etcdc "github.com/zalando/skipper/etcd"
 )
 
 func createInnkeeperClient(m *medium) (*innk.Client, error) {
@@ -18,6 +19,8 @@ func createClient(m *medium) (interface{}, error) {
 	switch m.typ {
 	case innkeeper:
 		return createInnkeeperClient(m)
+    case etcd:
+        return etcdc.New(urlsToStrings(m.urls), m.path), nil
 	case inline:
 		return &inlineClient{routes: m.eskip}, nil
 	case file:
